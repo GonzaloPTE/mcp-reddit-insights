@@ -23,7 +23,7 @@
       "datasource": "Prometheus",
       "targets": [
         {
-          "expr": "sum(rate(http_requests_total[5m]))",
+          "expr": "sum(irate(http_requests_total[1m]))",
           "legendFormat": "req/s"
         }
       ],
@@ -52,6 +52,34 @@
         }
       ],
       "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8}
+    },
+    {
+      "type": "graph",
+      "title": "Error rate (5xx/4xx)",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "sum(rate(http_requests_total{status_code=~\"5..\"}[5m]))",
+          "legendFormat": "5xx"
+        },
+        {
+          "expr": "sum(rate(http_requests_total{status_code=~\"4..\"}[5m]))",
+          "legendFormat": "4xx"
+        }
+      ],
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16}
+    },
+    {
+      "type": "table",
+      "title": "Per-route throughput",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "sum(rate(http_requests_total[5m])) by (method, path, status_code)",
+          "legendFormat": "{{method}} {{path}} {{status_code}}"
+        }
+      ],
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16}
     }
   ],
   "schemaVersion": 39,

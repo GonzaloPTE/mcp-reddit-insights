@@ -10,7 +10,7 @@ scrape_configs:
   - job_name: reddit-mcp
     metrics_path: /metrics
     static_configs:
-      - targets: ["app:8000"]
+      - targets: ["host.docker.internal:8000"]
 
   # Example exporters can be added here as needed
 
