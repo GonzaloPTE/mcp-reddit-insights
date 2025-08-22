@@ -1,11 +1,10 @@
 import os
 import time
 
+import meilisearch
 import pytest
 import redis
 from qdrant_client import QdrantClient
-import meilisearch
-
 
 pytestmark = pytest.mark.integration
 
@@ -53,5 +52,3 @@ def test_meilisearch_health():
         assert h.get("status") == "available"
 
     _wait_port(url, _check)
-
-

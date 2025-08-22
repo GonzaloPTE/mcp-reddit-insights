@@ -1,7 +1,7 @@
-from fastapi import APIRouter, Query
-from pydantic import BaseModel
 from typing import List
 
+from fastapi import APIRouter
+from pydantic import BaseModel
 
 router = APIRouter(prefix="/search", tags=["search"])
 
@@ -25,8 +25,21 @@ class SearchResponse(BaseModel):
 @router.post("", response_model=SearchResponse)
 async def search(req: SearchRequest) -> SearchResponse:
     # Minimal stub: echo query and return stubbed results
-    return SearchResponse(query=req.query, results=[
-        SearchItem(title="Stubbed result 1", url="https://example.com/stubbed-result-1", score=0.95),
-        SearchItem(title="Stubbed result 2", url="https://example.com/stubbed-result-2", score=0.92),
-        SearchItem(title="Stubbed result 3", url="https://example.com/stubbed-result-3", score=0.88),
-    ])
+    stubbed_results = [
+        SearchItem(
+            title="Stubbed result 1",
+            url="https://example.com/stubbed-result-1",
+            score=0.95,
+        ),
+        SearchItem(
+            title="Stubbed result 2",
+            url="https://example.com/stubbed-result-2",
+            score=0.92,
+        ),
+        SearchItem(
+            title="Stubbed result 3",
+            url="https://example.com/stubbed-result-3",
+            score=0.88,
+        ),
+    ]
+    return SearchResponse(query=req.query, results=stubbed_results)

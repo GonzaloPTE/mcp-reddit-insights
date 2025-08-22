@@ -12,4 +12,3 @@ def test_settings_parse_languages(monkeypatch):
     monkeypatch.setenv("NER_LANGUAGES", "es, en , fr ")
     s = Settings()
     assert s.ner_languages == ["es", "en", "fr"]
-

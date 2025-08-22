@@ -6,14 +6,15 @@ target-version = ["py311"]
 line-length = 100
 target-version = "py311"
 fix = true
+
+[tool.ruff.lint]
 select = [
   "E",  # pycodestyle errors
   "F",  # pyflakes
   "I",  # isort
   "B",  # flake8-bugbear
 ]
-ignore = [
-]
+ignore = []
 
 [tool.pytest.ini_options]
 addopts = "-q"

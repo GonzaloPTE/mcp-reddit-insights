@@ -2,9 +2,8 @@ import time
 from typing import Callable
 
 from fastapi import Request, Response
+from prometheus_client import Counter, Gauge, Histogram
 from starlette.middleware.base import BaseHTTPMiddleware
-from prometheus_client import Counter, Histogram, Gauge
-
 
 # Prometheus metrics
 HTTP_REQUESTS_TOTAL = Counter(
@@ -46,7 +45,11 @@ def _get_path_template(request: Request) -> str:
 
 
 class PrometheusMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request: Request, call_next: Callable[[Request], Response]) -> Response:
+    async def dispatch(
+        self,
+        request: Request,
+        call_next: Callable[[Request], Response],
+    ) -> Response:
         method = request.method
         path = _get_path_template(request)
         start = time.perf_counter()
@@ -67,5 +70,3 @@ class PrometheusMiddleware(BaseHTTPMiddleware):
 
 def instrument_app(app) -> None:
     app.add_middleware(PrometheusMiddleware)
-
-

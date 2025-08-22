@@ -1,8 +1,9 @@
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 from prometheus_client import make_asgi_app
-from .routes.search import router as search_router
+
 from .metrics import instrument_app
+from .routes.search import router as search_router
 
 app = FastAPI(title="Reddit MCP Service")
 
@@ -23,4 +24,3 @@ app.include_router(search_router)
 
 # Metrics middleware
 instrument_app(app)
-
