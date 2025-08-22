@@ -90,6 +90,9 @@ services:
     build:
       context: .
       dockerfile: server/Dockerfile
+      args:
+        NER_LANGUAGES: ${NER_LANGUAGES:-en,es}
+        SPACY_MODEL_SIZE: ${SPACY_MODEL_SIZE:-sm}
     container_name: reddit-mcp-app
     restart: unless-stopped
     environment:

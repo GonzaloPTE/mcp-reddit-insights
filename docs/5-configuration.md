@@ -45,10 +45,14 @@ This document lists configurable parameters for the Reddit MCP service. Paramete
 | METRICS_EXPORTER | prometheus | enum[prometheus,otlp,none] | Metrics sink. | NFR-1, NFR-2 |
 | ENABLE_TRACING | false | bool | Distributed tracing toggle. | NFR-1, NFR-4 |
 | USER_AGENT | reddit-mcp/0.1 | str | Client user agent for Reddit API. | FR-18, NFR-3 |
+| NER_LANGUAGES | en,es | list[str] | Comma-separated spaCy languages for NER (e.g., en,es). | FR-7 |
 
 Notes:
 - Defaults are indicative and may be tuned during implementation and benchmarking.
 - When a parameter toggles an optional feature (e.g., expert detection, sentiment), it shall default to disabled unless explicitly enabled.
+
+Dev tips:
+- For faster iteration during development, consider: `CACHE_TTL_SECONDS=30`, `EXPIRATION_DAYS=1`, `RERANK_TOP_K=5`, `QUERY_MAX_SUBQUERIES=3`, `LOG_LEVEL=DEBUG`.
 
 ### Service Endpoints and Secrets
 
