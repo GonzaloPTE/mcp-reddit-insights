@@ -5,5 +5,10 @@
 
 set -euo pipefail
 
-docker-compose --profile app up -d app
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+cd "$REPO_ROOT"
+
+docker-compose up -d mcp-reddit-insights
+
 echo "App container (and dependencies if needed) is up."

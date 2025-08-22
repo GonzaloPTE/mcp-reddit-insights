@@ -4,8 +4,12 @@
 
 set -euo pipefail
 
-./infra-only.sh
-./app-only-dev.sh
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+cd "$REPO_ROOT"
+
+"$SCRIPT_DIR/start-infra.sh"
+"$SCRIPT_DIR/start-app-dev.sh"
 
 echo "Infrastructure up + local dev app running."
 

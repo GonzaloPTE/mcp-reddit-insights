@@ -5,25 +5,25 @@
 Ensure Docker Desktop is running and your `.env` exists (see `.env.example`). Make scripts executable:
 
 ```bash
-chmod +x infra-only.sh infra-with-app.sh app-only.sh app-only-dev.sh infra-with-app-dev.sh
+chmod +x scripts/start.sh scripts/start-dev.sh scripts/start-app.sh scripts/start-app-dev.sh scripts/start-infra.sh
 ```
 
 Bring up only infrastructure (Qdrant, Meilisearch, Redis, Prometheus, Grafana):
 
 ```bash
-./infra-only.sh
+./scripts/start-infra.sh
 ```
 
-Bring up infrastructure + FastAPI app (profile `app`):
+Bring up infrastructure + FastAPI app:
 
 ```bash
-./infra-with-app.sh
+./scripts/start.sh
 ```
 
 Local development (infra in Docker + app with hot-reload locally):
 
 ```bash
-./infra-with-app-dev.sh
+./scripts/start-dev.sh
 ```
 
 Services:

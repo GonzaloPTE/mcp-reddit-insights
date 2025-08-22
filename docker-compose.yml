@@ -86,14 +86,9 @@ services:
     depends_on:
       - prometheus
 
-  app:
-    build:
-      context: .
-      dockerfile: server/Dockerfile
-      args:
-        NER_LANGUAGES: ${NER_LANGUAGES:-en,es}
-        SPACY_MODEL_SIZE: ${SPACY_MODEL_SIZE:-sm}
-    container_name: reddit-mcp-app
+  mcp-reddit-insights:
+    image: ghcr.io/gonzalopte/mcp-reddit-insights:latest
+    container_name: mcp-reddit-insights
     restart: unless-stopped
     environment:
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
@@ -112,8 +107,6 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
-    profiles:
-      - app
 
 volumes:
   qdrant_data:
