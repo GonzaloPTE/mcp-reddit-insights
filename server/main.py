@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 from prometheus_client import make_asgi_app
+from .routes.search import router as search_router
 
 app = FastAPI(title="Reddit MCP Service")
 
@@ -15,4 +16,7 @@ async def healthz() -> JSONResponse:
 # Mount Prometheus metrics ASGI app
 metrics_app = make_asgi_app()
 app.mount("/metrics", metrics_app)
+
+# Routers
+app.include_router(search_router)
 
