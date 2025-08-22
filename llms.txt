@@ -1,0 +1,32 @@
+# Reddit MCP Service
+
+> Python MCP service for Reddit retrieval and insights. Hybrid BM25 + embeddings (Meilisearch + Qdrant), freshness-aware retrieval, and LLM re‑ranking/synthesis. Ships with Redis caching, Docker Compose, and Prometheus + Grafana. Configurable via .env.
+
+```
+LLM: *
+$trainingAllowed: true
+$chatAllowed: true
+$embedded: allowed
+$responseLength: 250
+```
+
+- Decomposes user queries into subqueries; fetches subreddit posts/comments (optionally by user).
+- Preprocesses content (chunk, deduplicate, summarize) and indexes in vector store.
+- Performs hybrid search with temporal weighting; re‑ranks and synthesizes insights via LLM.
+- Returns raw links and structured outputs (trends, arguments, users).
+- Endpoints: /healthz, /metrics (Prometheus)
+
+## Docs
+- [Requirements](docs/0-requirements-specification.md): Functional and non-functional requirements
+- [High-Level Architecture](docs/1-high-level-architecture.md): Components and data flow
+- [Sequence Diagram](docs/2-sequence-diagram.md): End-to-end flow and freshness checks
+- [Deployment Diagram](docs/3-deployment-diagram.md): Services (Qdrant, Meilisearch, Redis, Prometheus, Grafana, App)
+- [Technology Choices](docs/4-technology.md): Stack selection and trade-offs
+- [Configuration](docs/5-configuration.md): Tunables (cache, freshness, retrieval, LLM, NER)
+
+## Optional
+- [README](README.md): Quickstart scripts and service URLs
+- [llms.txt](llms.txt): This context file, editable to fit your policy
+
+## License
+- [LICENSE](LICENSE): Apache 2.0
