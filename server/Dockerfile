@@ -41,7 +41,8 @@ for raw in languages.split(','):
     subprocess.check_call([sys.executable, '-m', 'spacy', 'download', pkg])
 PY
 
-COPY server /app
+# Copy application code under package path
+COPY server /app/server
 
 EXPOSE 8000
 
