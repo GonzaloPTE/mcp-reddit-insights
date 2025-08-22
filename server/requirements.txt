@@ -1,0 +1,10 @@
+fastapi==0.114.2
+uvicorn[standard]==0.30.6
+pydantic-settings==2.5.2
+httpx==0.27.2
+tenacity==9.0.0
+spacy==3.7.5
+prometheus-client==0.21.0
+redis==5.0.8
+qdrant-client==1.11.1
+meilisearch==0.31.3
