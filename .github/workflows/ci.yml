@@ -89,6 +89,11 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ghcr.io/${{ steps.repo.outputs.image }}
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=edge,enable={{is_default_branch}}
+            type=ref,event=tag
+            type=sha,format=short
 
       - name: Build and push
         uses: docker/build-push-action@v6
