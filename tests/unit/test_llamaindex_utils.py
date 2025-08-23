@@ -22,13 +22,14 @@ def test_map_reddit_results_to_text_nodes_basic():
     nodes = IndexUtils.map_reddit_results_to_text_nodes(results, query="hello")
     assert len(nodes) == 1
     n = nodes[0]
-    assert n.text == "Hello World"
+    assert n.text == "Body text"
     assert n.metadata["url"].endswith("abc123")
     assert n.metadata["query"] == "hello"
     assert n.metadata["source"] == "reddit"
+    assert n.metadata["title"] == "Hello World"
     assert n.metadata["permalink"].startswith("/r/test/")
     assert n.metadata["is_self"] is True
-    assert n.metadata["selftext"] == "Body text"
+    assert "selftext" not in n.metadata
 
 
 def test_map_reddit_results_to_text_nodes_empty_title():

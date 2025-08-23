@@ -34,7 +34,7 @@ def test_meilisearch_indexing_live():
     if not (_os.getenv("REDDIT_CLIENT_ID") and _os.getenv("REDDIT_CLIENT_SECRET")):
         pytest.skip("Reddit credentials not configured; skipping integration test")
 
-    index_name = "itest_meili_indexing"
+    index_name = "test_meilisearch_indexing_live"
     rqi = RedditQueryIndex(collection_name=index_name)
     results = rqi.index("reddit mcp", subreddit="mcp", limit=1)
     if not results:

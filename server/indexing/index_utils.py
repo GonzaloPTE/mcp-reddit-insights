@@ -55,24 +55,26 @@ class IndexUtils:
         """
         nodes: List[TextNode] = []
         for r in results:
-            text = r.title or ""
+            # Use the submission body (selftext) as the node content for vector search
+            text = getattr(r, "selftext", "") or ""
             node = TextNode(
                 text=text,
                 id_=r.id,
                 metadata={
-                    "url": r.url,
+                    # Preserve the title in metadata for display
+                    "title": getattr(r, "title", None),
+                    "url": getattr(r, "url", None),
                     "permalink": getattr(r, "permalink", None),
-                    "score": r.score,
-                    "num_comments": r.num_comments,
-                    "created_utc": r.created_utc,
+                    "score": getattr(r, "score", None),
+                    "num_comments": getattr(r, "num_comments", None),
+                    "created_utc": getattr(r, "created_utc", None),
                     "created": getattr(r, "created", None),
                     "edited_ts": getattr(r, "edited_ts", None),
-                    "subreddit": r.subreddit,
+                    "subreddit": getattr(r, "subreddit", None),
                     "subreddit_id": getattr(r, "subreddit_id", None),
-                    "author": r.author,
+                    "author": getattr(r, "author", None),
                     "author_fullname": getattr(r, "author_fullname", None),
                     "is_self": getattr(r, "is_self", None),
-                    "selftext": getattr(r, "selftext", None),
                     "over_18": getattr(r, "over_18", None),
                     "stickied": getattr(r, "stickied", None),
                     "locked": getattr(r, "locked", None),
@@ -132,18 +134,18 @@ class IndexUtils:
         for r in results:
             docs.append(
                 {
-                    "id": r.id,
-                    "title": r.title or "",
-                    "url": r.url,
+                    "id": getattr(r, "id", None),
+                    "title": getattr(r, "title", None),
+                    "url": getattr(r, "url", None),
                     "permalink": getattr(r, "permalink", None),
-                    "score": r.score,
-                    "num_comments": r.num_comments,
-                    "created_utc": r.created_utc,
+                    "score": getattr(r, "score", None),
+                    "num_comments": getattr(r, "num_comments", None),
+                    "created_utc": getattr(r, "created_utc", None),
                     "created": getattr(r, "created", None),
                     "edited_ts": getattr(r, "edited_ts", None),
-                    "subreddit": r.subreddit,
+                    "subreddit": getattr(r, "subreddit", None),
                     "subreddit_id": getattr(r, "subreddit_id", None),
-                    "author": r.author,
+                    "author": getattr(r, "author", None),
                     "author_fullname": getattr(r, "author_fullname", None),
                     "is_self": getattr(r, "is_self", None),
                     "selftext": getattr(r, "selftext", None),
