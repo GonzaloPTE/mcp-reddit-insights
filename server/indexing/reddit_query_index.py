@@ -1,0 +1,93 @@
+"""Reddit query indexing via LlamaIndex + Qdrant.
+
+This module provides a small façade class, ``RedditQueryIndex``, that:
+1) fetches posts via the Reddit connector,
+2) converts them to LlamaIndex ``TextNode`` objects,
+3) embeds and upserts them into a Qdrant collection via ``QdrantVectorStore``.
+
+"""
+
+from __future__ import annotations
+
+from typing import Any, List, Optional
+
+import qdrant_client
+from llama_index.core import StorageContext, VectorStoreIndex
+from llama_index.vector_stores.qdrant import QdrantVectorStore
+
+from ..config import settings
+from ..connectors.reddit import RedditConnector, RedditSearchResult
+from .llamaindex_utils import LlamaIndexUtils
+
+
+class RedditQueryIndex:
+    """Index Reddit search results into Qdrant using LlamaIndex.
+
+    Parameters
+    ----------
+    collection_name:
+        Qdrant collection name. Keep consistent per-embedding-dimension.
+    embed_model:
+        Optional embedding model override. If omitted, the value is derived from
+        ``settings.embedding_model_id``. Accepts either a LlamaIndex embedding
+        instance or a string alias (e.g., ``"local:BAAI/bge-small-en-v1.5"`` or
+        an OpenAI model id).
+    """
+
+    def __init__(
+        self,
+        collection_name: str = "reddit_mcp_posts",
+        embed_model: Optional[Any] = None,
+    ) -> None:
+        self._collection_name = collection_name
+        self._client = qdrant_client.QdrantClient(url=settings.qdrant_url)
+        # Resolve embed model from config unless explicitly overridden (tests may override).
+        # If config contains an HF model id (e.g., "BAAI/bge-small-en-v1.5"),
+        # convert to the local alias so LlamaIndex loads the local provider.
+        if embed_model is not None:
+            self._embed_model = embed_model
+        else:
+            model_id = settings.embedding_model_id
+            if isinstance(model_id, str) and model_id.startswith("local:"):
+                self._embed_model = model_id
+            elif isinstance(model_id, str) and "/" in model_id:
+                # Heuristic: looks like a HF model id -> use local provider
+                self._embed_model = f"local:{model_id}"
+            else:
+                # Could be "default" (Mock/OpenAI in tests) or an OpenAI model id
+                self._embed_model = model_id
+
+    def index(
+        self, query: str, subreddit: Optional[str] = None, limit: int = 10
+    ) -> List[RedditSearchResult]:
+        """Fetch Reddit results and upsert them into Qdrant.
+
+        The function is idempotent with respect to repeated titles/IDs being
+        embedded; Qdrant will upsert by point id. Caller is responsible for
+        choosing ``collection_name`` consistent with the embedding dimension.
+
+        Returns the list of results that were indexed (useful for downstream logs/tests).
+        """
+        if not query or not query.strip():
+            return []
+
+        reddit = RedditConnector(
+            client_id=settings.reddit_client_id,
+            client_secret=settings.reddit_client_secret,
+            user_agent=settings.reddit_user_agent,
+        )
+        results = reddit.search(query=query, subreddit=subreddit, limit=limit)
+        if not results:
+            return []
+
+        # Convert domain objects to LlamaIndex nodes with structured metadata.
+        nodes = LlamaIndexUtils.map_reddit_results_to_text_nodes(results, query)
+
+        # Ensure collection exists and upsert using the configured embedding model.
+        vector_store = QdrantVectorStore(client=self._client, collection_name=self._collection_name)
+        storage_context = StorageContext.from_defaults(vector_store=vector_store)
+        VectorStoreIndex.from_documents(
+            nodes, storage_context=storage_context, embed_model=self._embed_model
+        )
+
+        return results

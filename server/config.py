@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     log_level: str = Field(default="INFO", alias="LOG_LEVEL")
 
     llm_model_id: str = Field(default="gpt-5-nano", alias="LLM_MODEL_ID")
-    embedding_model_id: str = Field(default="text-embedding-3-large", alias="EMBEDDING_MODEL_ID")
+    embedding_model_id: str = Field(default="BAAI/bge-small-en-v1.5", alias="EMBEDDING_MODEL_ID")
 
     cache_ttl_seconds: int = Field(default=3600, alias="CACHE_TTL_SECONDS")
     expiration_days: int = Field(default=14, alias="EXPIRATION_DAYS")

@@ -34,6 +34,7 @@ def test_redis_ping():
 
 def test_qdrant_collections():
     url = os.environ.get("QDRANT_URL", "http://localhost:6333")
+    # Local Qdrant should not require API key
     client = QdrantClient(url=url)
 
     def _check():
