@@ -64,4 +64,6 @@ Dev tips:
 | MEILI_MASTER_KEY | dev-master-key | str | Master key for Meilisearch (dev) |
 | REDIS_URL | redis://localhost:6379 | str | Redis connection URL |
 | OPENAI_API_KEY | (empty) | str | API key for OpenAI |
-
+| REDDIT_CLIENT_ID | (empty) | str | Reddit app client ID |
+| REDDIT_CLIENT_SECRET | (empty) | str | Reddit app client secret |
+| REDDIT_USER_AGENT | reddit-mcp/0.1 | str | User agent for Reddit API |

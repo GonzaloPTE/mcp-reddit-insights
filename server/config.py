@@ -23,6 +23,10 @@ class Settings(BaseSettings):
 
     ner_languages_raw: str = Field(default="en,es", alias="NER_LANGUAGES")
 
+    reddit_client_id: str | None = Field(default=None, alias="REDDIT_CLIENT_ID")
+    reddit_client_secret: str | None = Field(default=None, alias="REDDIT_CLIENT_SECRET")
+    reddit_user_agent: str = Field(default="reddit-mcp/0.1", alias="REDDIT_USER_AGENT")
+
     @property
     def ner_languages(self) -> List[str]:
         return [lang.strip() for lang in self.ner_languages_raw.split(",") if lang.strip()]

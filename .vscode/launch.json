@@ -1,0 +1,19 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "name": "Pytest: Debug file",
+        "type": "debugpy",
+        "request": "launch",
+        "module": "pytest",
+        "cwd": "${workspaceFolder}",
+        "args": ["-q", "${file}"],
+        "console": "integratedTerminal",
+        "justMyCode": false,
+        "envFile": "${workspaceFolder}/.env",
+        "env": {
+          "PYTHONPATH": "${workspaceFolder}",
+        }
+      }
+    ]
+  }
