@@ -110,45 +110,45 @@ class RedditConnector:
         results: List[RedditSearchResult] = []
         for s in submissions:
             result = RedditSearchResult(
-                    id=s.id,
-                    title=s.title or "",
-                    url=getattr(s, "url", ""),
-                    score=int(getattr(s, "score", 0)),
-                    num_comments=int(getattr(s, "num_comments", 0)),
-                    created_utc=float(getattr(s, "created_utc", 0.0)),
-                    subreddit=str(getattr(s, "subreddit", "")),
-                    author=getattr(getattr(s, "author", None), "name", None),
-                    permalink=getattr(s, "permalink", None),
-                    selftext=getattr(s, "selftext", None),
-                    is_self=bool(getattr(s, "is_self", False)),
-                    over_18=bool(getattr(s, "over_18", False)),
-                    stickied=bool(getattr(s, "stickied", False)),
-                    locked=bool(getattr(s, "locked", False)),
-                    spoiler=bool(getattr(s, "spoiler", False)),
-                    upvote_ratio=(
-                        float(getattr(s, "upvote_ratio", 0.0))
-                        if getattr(s, "upvote_ratio", None) is not None
-                        else None
-                    ),
-                    link_flair_text=getattr(s, "link_flair_text", None),
-                    link_flair_template_id=getattr(s, "link_flair_template_id", None),
-                    subreddit_id=getattr(s, "subreddit_id", None),
-                    author_fullname=getattr(s, "author_fullname", None),
-                    created=float(getattr(s, "created", 0.0)),
-                    edited_ts=(
-                        float(getattr(s, "edited", 0.0)) if getattr(s, "edited", False) else None
-                    ),
-                    num_crossposts=int(getattr(s, "num_crossposts", 0)),
-                    gilded=int(getattr(s, "gilded", 0)),
-                    thumbnail=getattr(s, "thumbnail", None),
-                    domain=getattr(s, "domain", None),
-                    fullname=f"t3_{s.id}" if getattr(s, "id", None) else None,
+                id=s.id,
+                title=s.title or "",
+                url=getattr(s, "url", ""),
+                score=int(getattr(s, "score", 0)),
+                num_comments=int(getattr(s, "num_comments", 0)),
+                created_utc=float(getattr(s, "created_utc", 0.0)),
+                subreddit=str(getattr(s, "subreddit", "")),
+                author=getattr(getattr(s, "author", None), "name", None),
+                permalink=getattr(s, "permalink", None),
+                selftext=getattr(s, "selftext", None),
+                is_self=bool(getattr(s, "is_self", False)),
+                over_18=bool(getattr(s, "over_18", False)),
+                stickied=bool(getattr(s, "stickied", False)),
+                locked=bool(getattr(s, "locked", False)),
+                spoiler=bool(getattr(s, "spoiler", False)),
+                upvote_ratio=(
+                    float(getattr(s, "upvote_ratio", 0.0))
+                    if getattr(s, "upvote_ratio", None) is not None
+                    else None
+                ),
+                link_flair_text=getattr(s, "link_flair_text", None),
+                link_flair_template_id=getattr(s, "link_flair_template_id", None),
+                subreddit_id=getattr(s, "subreddit_id", None),
+                author_fullname=getattr(s, "author_fullname", None),
+                created=float(getattr(s, "created", 0.0)),
+                edited_ts=(
+                    float(getattr(s, "edited", 0.0)) if getattr(s, "edited", False) else None
+                ),
+                num_crossposts=int(getattr(s, "num_crossposts", 0)),
+                gilded=int(getattr(s, "gilded", 0)),
+                thumbnail=getattr(s, "thumbnail", None),
+                domain=getattr(s, "domain", None),
+                fullname=f"t3_{s.id}" if getattr(s, "id", None) else None,
             )
 
             if include_comments and hasattr(s, "comments"):
                 try:
                     if comment_sort:
-                        setattr(s, "comment_sort", comment_sort)
+                        s.comment_sort = comment_sort
                     # Expand MoreComments according to requested strategy
                     s.comments.replace_more(limit=replace_more_limit)
                     flat = s.comments.list()
@@ -176,7 +176,11 @@ class RedditConnector:
                                 stickied=getattr(c, "stickied", None),
                                 locked=getattr(c, "locked", None),
                                 distinguished=getattr(c, "distinguished", None),
-                                subreddit=str(getattr(c, "subreddit", "")) if getattr(c, "subreddit", None) else None,
+                                subreddit=(
+                                    str(getattr(c, "subreddit", ""))
+                                    if getattr(c, "subreddit", None)
+                                    else None
+                                ),
                                 subreddit_id=getattr(c, "subreddit_id", None),
                             )
                         )
