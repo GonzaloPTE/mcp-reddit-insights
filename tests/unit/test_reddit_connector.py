@@ -1,11 +1,10 @@
 from __future__ import annotations
 
 from types import SimpleNamespace
-from typing import List
 
 import pytest
 
-from server.connectors.reddit import RedditConnector, RedditSearchResult
+from server.connectors.reddit import RedditConnector
 
 
 def _fake_submission(**kwargs):
@@ -52,11 +51,11 @@ def test_search_with_subreddit(monkeypatch):
     monkeypatch.setattr(reddit_mod, "praw", SimpleNamespace(Reddit=lambda **_: FakeReddit()))
 
     conn = RedditConnector()
-    results: List[RedditSearchResult] = conn.search("fastapi", subreddit="learnpython", limit=3)
+    results = conn.search("fastapi", subreddit="learnpython", limit=3)
     assert len(results) == 2
     assert results[0].id == "1"
     assert results[0].subreddit == "python"
-    assert results[0].author == "someuser"
+    assert getattr(results[0].author, "name", None) == "someuser"
 
 
 def test_search_all_subreddits(monkeypatch):
@@ -82,7 +81,8 @@ def test_search_all_subreddits(monkeypatch):
     results = conn.search("pydantic", limit=2)
     assert len(results) == 1
     r = results[0]
-    assert isinstance(r, RedditSearchResult)
+    # now returns PRAW Submission objects
+    assert hasattr(r, "id") and hasattr(r, "title")
     assert r.url.startswith("https://")
 
 

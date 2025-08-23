@@ -1,4 +1,4 @@
-from .index_utils import IndexUtils
+from .reddit_index_utils import RedditIndexUtils
 from .reddit_query_index import RedditQueryIndex
 
-__all__ = ["RedditQueryIndex", "IndexUtils"]
+__all__ = ["RedditQueryIndex", "RedditIndexUtils"]

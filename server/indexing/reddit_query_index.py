@@ -17,8 +17,8 @@ from llama_index.core import StorageContext, VectorStoreIndex
 from llama_index.vector_stores.qdrant import QdrantVectorStore
 
 from ..config import settings
-from ..connectors.reddit import RedditConnector, RedditSearchResult
-from .index_utils import IndexUtils
+from ..connectors.reddit import RedditConnector
+from .reddit_index_utils import RedditIndexUtils
 
 
 class RedditQueryIndex:
@@ -58,9 +58,7 @@ class RedditQueryIndex:
                 # Could be "default" (Mock/OpenAI in tests) or an OpenAI model id
                 self._embed_model = model_id
 
-    def index(
-        self, query: str, subreddit: Optional[str] = None, limit: int = 10
-    ) -> List[RedditSearchResult]:
+    def index(self, query: str, subreddit: Optional[str] = None, limit: int = 10) -> List[object]:
         """Fetch Reddit results and upsert them into Qdrant.
 
         The function is idempotent with respect to repeated titles/IDs being
@@ -77,12 +75,19 @@ class RedditQueryIndex:
             client_secret=settings.reddit_client_secret,
             user_agent=settings.reddit_user_agent,
         )
-        results = reddit.search(query=query, subreddit=subreddit, limit=limit)
+        results = reddit.search(
+            query=query,
+            subreddit=subreddit,
+            limit=limit,
+            include_comments=True,
+            comments_limit=50,
+            replace_more_limit=None,
+        )
         if not results:
             return []
 
         # Convert domain objects to LlamaIndex nodes with structured metadata.
-        nodes = IndexUtils.map_reddit_results_to_text_nodes(results, query)
+        nodes = RedditIndexUtils.map_submissions_to_text_nodes(results, query)
 
         # Ensure collection exists and upsert using the configured embedding model.
         vector_store = QdrantVectorStore(client=self._client, collection_name=self._collection_name)
@@ -96,7 +101,7 @@ class RedditQueryIndex:
         try:
             meili_client = meilisearch.Client(settings.meili_url, settings.meili_master_key)
             index = meili_client.index(self._collection_name)
-            documents = IndexUtils.map_reddit_results_to_meili_documents(results, query)
+            documents = RedditIndexUtils.map_submissions_to_meili_documents(results, query)
             task = index.add_documents(documents, "id")
             # Wait for task completion so tests can assert immediate availability.
             task_uid = None

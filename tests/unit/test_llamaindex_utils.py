@@ -1,10 +1,11 @@
-from server.connectors.reddit import RedditSearchResult
-from server.indexing.index_utils import IndexUtils
+from types import SimpleNamespace
+
+from server.indexing.reddit_index_utils import RedditIndexUtils
 
 
-def test_map_reddit_results_to_text_nodes_basic():
+def test_map_submissions_to_text_nodes_basic():
     results = [
-        RedditSearchResult(
+        SimpleNamespace(
             id="abc123",
             title="Hello World",
             url="https://reddit.com/r/test/abc123",
@@ -19,7 +20,7 @@ def test_map_reddit_results_to_text_nodes_basic():
         )
     ]
 
-    nodes = IndexUtils.map_reddit_results_to_text_nodes(results, query="hello")
+    nodes = RedditIndexUtils.map_submissions_to_text_nodes(results, query="hello")
     assert len(nodes) == 1
     n = nodes[0]
     assert n.text == "Body text"
@@ -32,9 +33,9 @@ def test_map_reddit_results_to_text_nodes_basic():
     assert "selftext" not in n.metadata
 
 
-def test_map_reddit_results_to_text_nodes_empty_title():
+def test_map_submissions_to_text_nodes_empty_title():
     results = [
-        RedditSearchResult(
+        SimpleNamespace(
             id="x1",
             title="",
             url="https://reddit.com/x1",
@@ -46,7 +47,7 @@ def test_map_reddit_results_to_text_nodes_empty_title():
         )
     ]
 
-    nodes = IndexUtils.map_reddit_results_to_text_nodes(results, query="q")
+    nodes = RedditIndexUtils.map_submissions_to_text_nodes(results, query="q")
     assert len(nodes) == 1
     assert isinstance(nodes[0].text, str)
     assert nodes[0].text == ""

@@ -1,67 +1,33 @@
-"""LlamaIndex utility helpers.
+"""Reddit indexing mappers.
 
-This module contains small, focused helpers used to translate internal
-domain objects into LlamaIndex primitives.
+This module contains helpers to map PRAW models (Submission/Comment) to
+LlamaIndex TextNodes (Qdrant) and Meilisearch documents.
 """
 
 from __future__ import annotations
 
-from typing import List
+from typing import Any, List
 
 from llama_index.core.schema import TextNode
 
-from ..connectors.reddit import RedditComment, RedditSearchResult
 
-
-class IndexUtils:
+class RedditIndexUtils:
     """Namespace for reusable indexing utilities.
 
-    This helper consolidates transformations between internal domain objects
-    (e.g., ``RedditSearchResult``) and concrete index payloads for:
-    - LlamaIndex ``TextNode`` objects (for Qdrant vector store)
-    - Meilisearch documents (for BM25/lexical search)
-
-    The goal is to keep mapping logic centralized, consistent, and easily
-    testable, so additions to captured Reddit metadata automatically flow to
-    both vector and lexical indices.
+    Consolidates transformations from PRAW models to:
+    - LlamaIndex ``TextNode`` objects (Qdrant vector store)
+    - Meilisearch documents (BM25/lexical search)
     """
 
     @staticmethod
-    def map_reddit_results_to_text_nodes(
-        results: List[RedditSearchResult], query: str
-    ) -> List[TextNode]:
-        """Convert Reddit search results into LlamaIndex ``TextNode`` objects.
-
-        Each node carries the post title as text and attaches structured
-        metadata that will be persisted to the vector store as payload.
-
-        Parameters
-        ----------
-        results:
-            Collection of ``RedditSearchResult`` items produced by the connector.
-        query:
-            Original user query, attached as provenance in metadata.
-
-        Returns
-        -------
-        List[TextNode]
-            A list of LlamaIndex nodes ready for embedding and upsert.
-
-        Notes
-        -----
-        The attached metadata includes a broad subset of PRAW ``Submission``
-        attributes (e.g., permalink, flair, moderation flags, counts). See
-        PRAW ``Submission`` reference for details.
-        """
+    def map_submissions_to_text_nodes(results: List[Any], query: str) -> List[TextNode]:
         nodes: List[TextNode] = []
         for r in results:
-            # Use the submission body (selftext) as the node content for vector search
             text = getattr(r, "selftext", "") or ""
             node = TextNode(
                 text=text,
-                id_=r.id,
+                id_=getattr(r, "id", None),
                 metadata={
-                    # Preserve the title in metadata for display
                     "title": getattr(r, "title", None),
                     "url": getattr(r, "url", None),
                     "permalink": getattr(r, "permalink", None),
@@ -70,9 +36,11 @@ class IndexUtils:
                     "created_utc": getattr(r, "created_utc", None),
                     "created": getattr(r, "created", None),
                     "edited_ts": getattr(r, "edited_ts", None),
-                    "subreddit": getattr(r, "subreddit", None),
+                    "subreddit": (
+                        str(getattr(r, "subreddit", "")) if getattr(r, "subreddit", None) else None
+                    ),
                     "subreddit_id": getattr(r, "subreddit_id", None),
-                    "author": getattr(r, "author", None),
+                    "author": getattr(getattr(r, "author", None), "name", None),
                     "author_fullname": getattr(r, "author_fullname", None),
                     "is_self": getattr(r, "is_self", None),
                     "over_18": getattr(r, "over_18", None),
@@ -92,48 +60,20 @@ class IndexUtils:
                 },
             )
             nodes.append(node)
-            # Also map any fetched comments into additional nodes
             comments = getattr(r, "comments", None)
             if comments:
-                nodes.extend(IndexUtils.map_reddit_comments_to_text_nodes(comments, query))
+                flat_comments = comments
+                # If it's a CommentForest, flatten to include all replies
+                if hasattr(comments, "list"):
+                    try:
+                        flat_comments = comments.list()
+                    except Exception:
+                        flat_comments = list(comments)
+                nodes.extend(RedditIndexUtils.map_comments_to_text_nodes(flat_comments, query))
         return nodes
 
     @staticmethod
-    def map_reddit_results_to_meili_documents(
-        results: List[RedditSearchResult], query: str
-    ) -> List[dict]:
-        """Convert Reddit search results into Meilisearch documents.
-
-        Parameters
-        ----------
-        results:
-            Collection of ``RedditSearchResult`` items produced by the connector.
-        query:
-            Original user query, attached as provenance in the document payload.
-
-        Returns
-        -------
-        List[dict]
-            A list of plain JSON-serializable dictionaries ready for Meilisearch
-            ``add_documents`` ingestion. Documents include:
-
-            - Identity: ``id`` (primary key), ``fullname``
-            - Content: ``title``, ``selftext``, ``url``, ``permalink``, ``domain``
-            - Subreddit/author: ``subreddit``, ``subreddit_id``, ``author``, ``author_fullname``
-            - Timestamps: ``created_utc``, ``created``, ``edited_ts``
-            - Moderation/flags: ``over_18``, ``stickied``, ``locked``, ``spoiler``
-            - Flair: ``link_flair_text``, ``link_flair_template_id``
-            - Counters/scores: ``score``, ``num_comments``, ``num_crossposts``,
-              ``gilded``, ``upvote_ratio``
-            - Media hints: ``thumbnail``
-            - Provenance: ``query``, ``source`` (``"reddit"``)
-
-        Notes
-        -----
-        These attributes are chosen to support rich filtering/sorting in
-        Meilisearch (e.g., by subreddit, author, NSFW flag) and future
-        analytical use-cases.
-        """
+    def map_submissions_to_meili_documents(results: List[Any], query: str) -> List[dict]:
         docs: List[dict] = []
         for r in results:
             docs.append(
@@ -147,9 +87,11 @@ class IndexUtils:
                     "created_utc": getattr(r, "created_utc", None),
                     "created": getattr(r, "created", None),
                     "edited_ts": getattr(r, "edited_ts", None),
-                    "subreddit": getattr(r, "subreddit", None),
+                    "subreddit": (
+                        str(getattr(r, "subreddit", "")) if getattr(r, "subreddit", None) else None
+                    ),
                     "subreddit_id": getattr(r, "subreddit_id", None),
-                    "author": getattr(r, "author", None),
+                    "author": getattr(getattr(r, "author", None), "name", None),
                     "author_fullname": getattr(r, "author_fullname", None),
                     "is_self": getattr(r, "is_self", None),
                     "selftext": getattr(r, "selftext", None),
@@ -169,21 +111,19 @@ class IndexUtils:
                     "source": "reddit",
                 }
             )
-            # Also map any fetched comments into additional documents
             comments = getattr(r, "comments", None)
             if comments:
-                docs.extend(IndexUtils.map_reddit_comments_to_meili_documents(comments, query))
+                flat_comments = comments
+                if hasattr(comments, "list"):
+                    try:
+                        flat_comments = comments.list()
+                    except Exception:
+                        flat_comments = list(comments)
+                docs.extend(RedditIndexUtils.map_comments_to_meili_documents(flat_comments, query))
         return docs
 
     @staticmethod
-    def map_reddit_comments_to_text_nodes(
-        comments: List[RedditComment], query: str
-    ) -> List[TextNode]:
-        """Convert Reddit comments into LlamaIndex ``TextNode`` objects.
-
-        The node text contains the comment body. Threading and provenance
-        details are attached in metadata for downstream use.
-        """
+    def map_comments_to_text_nodes(comments: List[Any], query: str) -> List[TextNode]:
         nodes: List[TextNode] = []
         for c in comments:
             text = getattr(c, "body", "") or ""
@@ -203,7 +143,7 @@ class IndexUtils:
                     "parent_id": getattr(c, "parent_id", None),
                     "link_id": link_id,
                     "submission_id": submission_id,
-                    "author": getattr(c, "author", None),
+                    "author": getattr(getattr(c, "author", None), "name", None),
                     "score": getattr(c, "score", None),
                     "created_utc": getattr(c, "created_utc", None),
                     "is_submitter": getattr(c, "is_submitter", None),
@@ -212,7 +152,9 @@ class IndexUtils:
                     "stickied": getattr(c, "stickied", None),
                     "locked": getattr(c, "locked", None),
                     "distinguished": getattr(c, "distinguished", None),
-                    "subreddit": getattr(c, "subreddit", None),
+                    "subreddit": (
+                        str(getattr(c, "subreddit", "")) if getattr(c, "subreddit", None) else None
+                    ),
                     "subreddit_id": getattr(c, "subreddit_id", None),
                     "query": query,
                     "source": "reddit",
@@ -222,13 +164,7 @@ class IndexUtils:
         return nodes
 
     @staticmethod
-    def map_reddit_comments_to_meili_documents(
-        comments: List[RedditComment], query: str
-    ) -> List[dict]:
-        """Convert Reddit comments into Meilisearch documents.
-
-        Includes threading identifiers and basic moderation/score metadata.
-        """
+    def map_comments_to_meili_documents(comments: List[Any], query: str) -> List[dict]:
         docs: List[dict] = []
         for c in comments:
             link_id = getattr(c, "link_id", None)
@@ -247,7 +183,7 @@ class IndexUtils:
                     "parent_id": getattr(c, "parent_id", None),
                     "link_id": link_id,
                     "submission_id": submission_id,
-                    "author": getattr(c, "author", None),
+                    "author": getattr(getattr(c, "author", None), "name", None),
                     "score": getattr(c, "score", None),
                     "created_utc": getattr(c, "created_utc", None),
                     "is_submitter": getattr(c, "is_submitter", None),
@@ -256,7 +192,9 @@ class IndexUtils:
                     "stickied": getattr(c, "stickied", None),
                     "locked": getattr(c, "locked", None),
                     "distinguished": getattr(c, "distinguished", None),
-                    "subreddit": getattr(c, "subreddit", None),
+                    "subreddit": (
+                        str(getattr(c, "subreddit", "")) if getattr(c, "subreddit", None) else None
+                    ),
                     "subreddit_id": getattr(c, "subreddit_id", None),
                     "query": query,
                     "source": "reddit",
