@@ -37,6 +37,27 @@ class RedditSearchResult:
     thumbnail: Optional[str] = None
     domain: Optional[str] = None
     fullname: Optional[str] = None
+    # Embedded comments (optional, when requested)
+    comments: Optional[List["RedditComment"]] = None
+
+
+@dataclass
+class RedditComment:
+    id: str
+    body: str
+    author: Optional[str]
+    score: int
+    created_utc: float
+    parent_id: Optional[str]
+    link_id: Optional[str]
+    is_submitter: Optional[bool]
+    depth: Optional[int]
+    controversiality: Optional[int]
+    stickied: Optional[bool]
+    locked: Optional[bool]
+    distinguished: Optional[str]
+    subreddit: Optional[str]
+    subreddit_id: Optional[str]
 
 
 class RedditConnector:
@@ -70,6 +91,11 @@ class RedditConnector:
         query: str,
         subreddit: Optional[str] = None,
         limit: int = 10,
+        *,
+        include_comments: bool = True,
+        comments_limit: Optional[int] = 50,
+        comment_sort: Optional[str] = None,
+        replace_more_limit: Optional[int] = 3,
     ) -> List[RedditSearchResult]:
         if not query or not query.strip():
             return []
@@ -83,8 +109,7 @@ class RedditConnector:
 
         results: List[RedditSearchResult] = []
         for s in submissions:
-            results.append(
-                RedditSearchResult(
+            result = RedditSearchResult(
                     id=s.id,
                     title=s.title or "",
                     url=getattr(s, "url", ""),
@@ -118,7 +143,48 @@ class RedditConnector:
                     thumbnail=getattr(s, "thumbnail", None),
                     domain=getattr(s, "domain", None),
                     fullname=f"t3_{s.id}" if getattr(s, "id", None) else None,
-                )
             )
+
+            if include_comments and hasattr(s, "comments"):
+                try:
+                    if comment_sort:
+                        setattr(s, "comment_sort", comment_sort)
+                    # Expand MoreComments according to requested strategy
+                    s.comments.replace_more(limit=replace_more_limit)
+                    flat = s.comments.list()
+                    if comments_limit is not None and comments_limit >= 0:
+                        flat = flat[:comments_limit]
+                    mapped: List[RedditComment] = []
+                    for c in flat:
+                        # Some entries could still be MoreComments if limit=0 and not expanded
+                        # Guard by presence of 'body'
+                        body = getattr(c, "body", None)
+                        if body is None:
+                            continue
+                        mapped.append(
+                            RedditComment(
+                                id=str(getattr(c, "id", "")),
+                                body=body or "",
+                                author=getattr(getattr(c, "author", None), "name", None),
+                                score=int(getattr(c, "score", 0)),
+                                created_utc=float(getattr(c, "created_utc", 0.0)),
+                                parent_id=getattr(c, "parent_id", None),
+                                link_id=getattr(c, "link_id", None),
+                                is_submitter=getattr(c, "is_submitter", None),
+                                depth=getattr(c, "depth", None),
+                                controversiality=getattr(c, "controversiality", None),
+                                stickied=getattr(c, "stickied", None),
+                                locked=getattr(c, "locked", None),
+                                distinguished=getattr(c, "distinguished", None),
+                                subreddit=str(getattr(c, "subreddit", "")) if getattr(c, "subreddit", None) else None,
+                                subreddit_id=getattr(c, "subreddit_id", None),
+                            )
+                        )
+                    result.comments = mapped
+                except Exception:
+                    # Non-fatal if comments cannot be fetched
+                    result.comments = []
+
+            results.append(result)
 
         return results

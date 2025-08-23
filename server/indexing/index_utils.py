@@ -10,7 +10,7 @@ from typing import List
 
 from llama_index.core.schema import TextNode
 
-from ..connectors.reddit import RedditSearchResult
+from ..connectors.reddit import RedditComment, RedditSearchResult
 
 
 class IndexUtils:
@@ -92,6 +92,10 @@ class IndexUtils:
                 },
             )
             nodes.append(node)
+            # Also map any fetched comments into additional nodes
+            comments = getattr(r, "comments", None)
+            if comments:
+                nodes.extend(IndexUtils.map_reddit_comments_to_text_nodes(comments, query))
         return nodes
 
     @staticmethod
@@ -161,6 +165,99 @@ class IndexUtils:
                     "thumbnail": getattr(r, "thumbnail", None),
                     "domain": getattr(r, "domain", None),
                     "fullname": getattr(r, "fullname", None),
+                    "query": query,
+                    "source": "reddit",
+                }
+            )
+            # Also map any fetched comments into additional documents
+            comments = getattr(r, "comments", None)
+            if comments:
+                docs.extend(IndexUtils.map_reddit_comments_to_meili_documents(comments, query))
+        return docs
+
+    @staticmethod
+    def map_reddit_comments_to_text_nodes(
+        comments: List[RedditComment], query: str
+    ) -> List[TextNode]:
+        """Convert Reddit comments into LlamaIndex ``TextNode`` objects.
+
+        The node text contains the comment body. Threading and provenance
+        details are attached in metadata for downstream use.
+        """
+        nodes: List[TextNode] = []
+        for c in comments:
+            text = getattr(c, "body", "") or ""
+            link_id = getattr(c, "link_id", None)
+            submission_id = None
+            if isinstance(link_id, str) and "_" in link_id:
+                try:
+                    submission_id = link_id.split("_", 1)[1]
+                except Exception:
+                    submission_id = None
+
+            node = TextNode(
+                text=text,
+                id_=getattr(c, "id", None),
+                metadata={
+                    "kind": "comment",
+                    "parent_id": getattr(c, "parent_id", None),
+                    "link_id": link_id,
+                    "submission_id": submission_id,
+                    "author": getattr(c, "author", None),
+                    "score": getattr(c, "score", None),
+                    "created_utc": getattr(c, "created_utc", None),
+                    "is_submitter": getattr(c, "is_submitter", None),
+                    "depth": getattr(c, "depth", None),
+                    "controversiality": getattr(c, "controversiality", None),
+                    "stickied": getattr(c, "stickied", None),
+                    "locked": getattr(c, "locked", None),
+                    "distinguished": getattr(c, "distinguished", None),
+                    "subreddit": getattr(c, "subreddit", None),
+                    "subreddit_id": getattr(c, "subreddit_id", None),
+                    "query": query,
+                    "source": "reddit",
+                },
+            )
+            nodes.append(node)
+        return nodes
+
+    @staticmethod
+    def map_reddit_comments_to_meili_documents(
+        comments: List[RedditComment], query: str
+    ) -> List[dict]:
+        """Convert Reddit comments into Meilisearch documents.
+
+        Includes threading identifiers and basic moderation/score metadata.
+        """
+        docs: List[dict] = []
+        for c in comments:
+            link_id = getattr(c, "link_id", None)
+            submission_id = None
+            if isinstance(link_id, str) and "_" in link_id:
+                try:
+                    submission_id = link_id.split("_", 1)[1]
+                except Exception:
+                    submission_id = None
+
+            docs.append(
+                {
+                    "id": getattr(c, "id", None),
+                    "body": getattr(c, "body", None),
+                    "kind": "comment",
+                    "parent_id": getattr(c, "parent_id", None),
+                    "link_id": link_id,
+                    "submission_id": submission_id,
+                    "author": getattr(c, "author", None),
+                    "score": getattr(c, "score", None),
+                    "created_utc": getattr(c, "created_utc", None),
+                    "is_submitter": getattr(c, "is_submitter", None),
+                    "depth": getattr(c, "depth", None),
+                    "controversiality": getattr(c, "controversiality", None),
+                    "stickied": getattr(c, "stickied", None),
+                    "locked": getattr(c, "locked", None),
+                    "distinguished": getattr(c, "distinguished", None),
+                    "subreddit": getattr(c, "subreddit", None),
+                    "subreddit_id": getattr(c, "subreddit_id", None),
                     "query": query,
                     "source": "reddit",
                 }
