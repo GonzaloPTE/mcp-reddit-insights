@@ -58,8 +58,8 @@ class RedditQueryIndex:
                 # Could be "default" (Mock/OpenAI in tests) or an OpenAI model id
                 self._embed_model = model_id
 
-    def index(self, query: str, subreddit: Optional[str] = None, limit: int = 10) -> List[object]:
-        """Fetch Reddit results and upsert them into Qdrant.
+    def upsert(self, query: str, subreddit: Optional[str] = None, limit: int = 10) -> List[object]:
+        """Fetch Reddit results and upsert them into Qdrant and Meilisearch.
 
         The function is idempotent with respect to repeated titles/IDs being
         embedded; Qdrant will upsert by point id. Caller is responsible for

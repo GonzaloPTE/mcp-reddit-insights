@@ -5,14 +5,16 @@ from server.indexing.reddit_query_index import RedditQueryIndex
 
 
 @patch("server.indexing.reddit_query_index.RedditConnector")
-def test_index_empty_query(mock_reddit):
+def test_upsert_empty_query(mock_reddit):
     rqi = RedditQueryIndex(collection_name="test_index_empty_query")
-    assert rqi.index("") == []
+    assert rqi.upsert("") == []
 
 
+@patch("server.indexing.reddit_query_index.VectorStoreIndex")
+@patch("server.indexing.reddit_query_index.qdrant_client.QdrantClient")
 @patch("server.indexing.reddit_query_index.meilisearch")
 @patch("server.indexing.reddit_query_index.RedditConnector")
-def test_index_with_results(mock_reddit, mock_meili):
+def test_upsert_with_results(mock_reddit, mock_meili, mock_qdrant_client, mock_vector_index):
     os.environ["IS_TESTING"] = "1"
 
     class DummyResult:
@@ -36,9 +38,12 @@ def test_index_with_results(mock_reddit, mock_meili):
     mock_client.index.return_value = mock_index
     mock_meili.Client.return_value = mock_client
 
+    # Make VectorStoreIndex.from_documents a no-op
+    mock_vector_index.from_documents.return_value = None
+
     rqi = RedditQueryIndex(collection_name="test_index_with_results", embed_model="default")
 
-    out = rqi.index("q", subreddit="s", limit=1)
+    out = rqi.upsert("q", subreddit="s", limit=1)
     assert len(out) == 1
     assert out[0].id == "abc"
 

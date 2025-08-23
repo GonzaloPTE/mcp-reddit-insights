@@ -28,6 +28,9 @@ class RedditIndexUtils:
                 text=text,
                 id_=getattr(r, "id", None),
                 metadata={
+                    "doc_id": getattr(r, "id", None),
+                    "reddit_id": getattr(r, "id", None),
+                    "kind": "submission",
                     "title": getattr(r, "title", None),
                     "url": getattr(r, "url", None),
                     "permalink": getattr(r, "permalink", None),
@@ -140,6 +143,7 @@ class RedditIndexUtils:
                 id_=getattr(c, "id", None),
                 metadata={
                     "kind": "comment",
+                    "doc_id": getattr(c, "id", None),
                     "parent_id": getattr(c, "parent_id", None),
                     "link_id": link_id,
                     "submission_id": submission_id,
