@@ -1,5 +1,5 @@
 from server.connectors.reddit import RedditSearchResult
-from server.indexing.llamaindex_utils import LlamaIndexUtils
+from server.indexing.index_utils import IndexUtils
 
 
 def test_map_reddit_results_to_text_nodes_basic():
@@ -13,16 +13,22 @@ def test_map_reddit_results_to_text_nodes_basic():
             created_utc=1700000000.0,
             subreddit="test",
             author="user1",
+            permalink="/r/test/comments/abc123/hello_world/",
+            is_self=True,
+            selftext="Body text",
         )
     ]
 
-    nodes = LlamaIndexUtils.map_reddit_results_to_text_nodes(results, query="hello")
+    nodes = IndexUtils.map_reddit_results_to_text_nodes(results, query="hello")
     assert len(nodes) == 1
     n = nodes[0]
     assert n.text == "Hello World"
     assert n.metadata["url"].endswith("abc123")
     assert n.metadata["query"] == "hello"
     assert n.metadata["source"] == "reddit"
+    assert n.metadata["permalink"].startswith("/r/test/")
+    assert n.metadata["is_self"] is True
+    assert n.metadata["selftext"] == "Body text"
 
 
 def test_map_reddit_results_to_text_nodes_empty_title():
@@ -39,7 +45,7 @@ def test_map_reddit_results_to_text_nodes_empty_title():
         )
     ]
 
-    nodes = LlamaIndexUtils.map_reddit_results_to_text_nodes(results, query="q")
+    nodes = IndexUtils.map_reddit_results_to_text_nodes(results, query="q")
     assert len(nodes) == 1
     assert isinstance(nodes[0].text, str)
     assert nodes[0].text == ""

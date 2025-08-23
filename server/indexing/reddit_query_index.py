@@ -18,7 +18,7 @@ from llama_index.vector_stores.qdrant import QdrantVectorStore
 
 from ..config import settings
 from ..connectors.reddit import RedditConnector, RedditSearchResult
-from .llamaindex_utils import LlamaIndexUtils
+from .index_utils import IndexUtils
 
 
 class RedditQueryIndex:
@@ -82,7 +82,7 @@ class RedditQueryIndex:
             return []
 
         # Convert domain objects to LlamaIndex nodes with structured metadata.
-        nodes = LlamaIndexUtils.map_reddit_results_to_text_nodes(results, query)
+        nodes = IndexUtils.map_reddit_results_to_text_nodes(results, query)
 
         # Ensure collection exists and upsert using the configured embedding model.
         vector_store = QdrantVectorStore(client=self._client, collection_name=self._collection_name)
@@ -96,21 +96,7 @@ class RedditQueryIndex:
         try:
             meili_client = meilisearch.Client(settings.meili_url, settings.meili_master_key)
             index = meili_client.index(self._collection_name)
-            documents = [
-                {
-                    "id": r.id,
-                    "title": r.title or "",
-                    "url": r.url,
-                    "score": r.score,
-                    "num_comments": r.num_comments,
-                    "created_utc": r.created_utc,
-                    "subreddit": r.subreddit,
-                    "author": r.author,
-                    "query": query,
-                    "source": "reddit",
-                }
-                for r in results
-            ]
+            documents = IndexUtils.map_reddit_results_to_meili_documents(results, query)
             task = index.add_documents(documents, "id")
             # Wait for task completion so tests can assert immediate availability.
             task_uid = None

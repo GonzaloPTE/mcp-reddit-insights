@@ -17,6 +17,26 @@ class RedditSearchResult:
     created_utc: float
     subreddit: str
     author: Optional[str]
+    # Optional rich metadata
+    permalink: Optional[str] = None
+    selftext: Optional[str] = None
+    is_self: Optional[bool] = None
+    over_18: Optional[bool] = None
+    stickied: Optional[bool] = None
+    locked: Optional[bool] = None
+    spoiler: Optional[bool] = None
+    upvote_ratio: Optional[float] = None
+    link_flair_text: Optional[str] = None
+    link_flair_template_id: Optional[str] = None
+    subreddit_id: Optional[str] = None
+    author_fullname: Optional[str] = None
+    created: Optional[float] = None
+    edited_ts: Optional[float] = None
+    num_crossposts: Optional[int] = None
+    gilded: Optional[int] = None
+    thumbnail: Optional[str] = None
+    domain: Optional[str] = None
+    fullname: Optional[str] = None
 
 
 class RedditConnector:
@@ -73,6 +93,31 @@ class RedditConnector:
                     created_utc=float(getattr(s, "created_utc", 0.0)),
                     subreddit=str(getattr(s, "subreddit", "")),
                     author=getattr(getattr(s, "author", None), "name", None),
+                    permalink=getattr(s, "permalink", None),
+                    selftext=getattr(s, "selftext", None),
+                    is_self=bool(getattr(s, "is_self", False)),
+                    over_18=bool(getattr(s, "over_18", False)),
+                    stickied=bool(getattr(s, "stickied", False)),
+                    locked=bool(getattr(s, "locked", False)),
+                    spoiler=bool(getattr(s, "spoiler", False)),
+                    upvote_ratio=(
+                        float(getattr(s, "upvote_ratio", 0.0))
+                        if getattr(s, "upvote_ratio", None) is not None
+                        else None
+                    ),
+                    link_flair_text=getattr(s, "link_flair_text", None),
+                    link_flair_template_id=getattr(s, "link_flair_template_id", None),
+                    subreddit_id=getattr(s, "subreddit_id", None),
+                    author_fullname=getattr(s, "author_fullname", None),
+                    created=float(getattr(s, "created", 0.0)),
+                    edited_ts=(
+                        float(getattr(s, "edited", 0.0)) if getattr(s, "edited", False) else None
+                    ),
+                    num_crossposts=int(getattr(s, "num_crossposts", 0)),
+                    gilded=int(getattr(s, "gilded", 0)),
+                    thumbnail=getattr(s, "thumbnail", None),
+                    domain=getattr(s, "domain", None),
+                    fullname=f"t3_{s.id}" if getattr(s, "id", None) else None,
                 )
             )
 
