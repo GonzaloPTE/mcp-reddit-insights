@@ -92,6 +92,7 @@ services:
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       QDRANT_URL: ${QDRANT_URL:-http://qdrant:6333}
       MEILI_URL: ${MEILI_URL:-http://meilisearch:7700}
+      MEILI_MASTER_KEY: ${MEILI_MASTER_KEY:-dev-master-key}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
     ports:

@@ -11,6 +11,7 @@ from __future__ import annotations
 
 from typing import Any, List, Optional
 
+import meilisearch
 import qdrant_client
 from llama_index.core import StorageContext, VectorStoreIndex
 from llama_index.vector_stores.qdrant import QdrantVectorStore
@@ -89,5 +90,43 @@ class RedditQueryIndex:
         VectorStoreIndex.from_documents(
             nodes, storage_context=storage_context, embed_model=self._embed_model
         )
+
+        # Also index into Meilisearch (BM25) for lexical search.
+        # Use the same collection/index name for parity with Qdrant.
+        try:
+            meili_client = meilisearch.Client(settings.meili_url, settings.meili_master_key)
+            index = meili_client.index(self._collection_name)
+            documents = [
+                {
+                    "id": r.id,
+                    "title": r.title or "",
+                    "url": r.url,
+                    "score": r.score,
+                    "num_comments": r.num_comments,
+                    "created_utc": r.created_utc,
+                    "subreddit": r.subreddit,
+                    "author": r.author,
+                    "query": query,
+                    "source": "reddit",
+                }
+                for r in results
+            ]
+            task = index.add_documents(documents, "id")
+            # Wait for task completion so tests can assert immediate availability.
+            task_uid = None
+            if isinstance(task, dict):
+                task_uid = task.get("taskUid") or task.get("uid")
+            else:
+                # Support SDKs that return a Task object
+                task_uid = (
+                    getattr(task, "taskUid", None)
+                    or getattr(task, "uid", None)
+                    or getattr(task, "task_uid", None)
+                )
+            if task_uid is not None:
+                meili_client.wait_for_task(task_uid)
+        except Exception:
+            # Best-effort: do not fail the overall indexing if Meilisearch is unavailable.
+            pass
 
         return results

@@ -9,6 +9,7 @@ class Settings(BaseSettings):
 
     qdrant_url: str = Field(default="http://localhost:6333", alias="QDRANT_URL")
     meili_url: str = Field(default="http://localhost:7700", alias="MEILI_URL")
+    meili_master_key: str | None = Field(default=None, alias="MEILI_MASTER_KEY")
     redis_url: str = Field(default="redis://localhost:6379", alias="REDIS_URL")
 
     log_level: str = Field(default="INFO", alias="LOG_LEVEL")
